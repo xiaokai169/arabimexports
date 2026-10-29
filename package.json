@@ -1,0 +1,22 @@
+{
+  "name": "arabimexports",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "阿拉伯进出口商联合会官网 —— PC 端与移动端同仓管理",
+  "scripts": {
+    "dev:pc": "pnpm --filter @arabimexports/pc dev",
+    "dev:mobile": "pnpm --filter @arabimexports/mobile dev",
+    "build": "pnpm --filter @arabimexports/pc build-only && pnpm --filter @arabimexports/mobile build-only && pnpm run assemble",
+    "build:pc": "pnpm --filter @arabimexports/pc build-only && pnpm run assemble",
+    "build:mobile": "pnpm --filter @arabimexports/mobile build-only && pnpm run assemble",
+    "assemble": "node scripts/assemble-dist.mjs",
+    "type-check": "pnpm --filter @arabimexports/pc type-check && pnpm --filter @arabimexports/mobile type-check"
+  },
+  "packageManager": "pnpm@9.10.0",
+  "pnpm": {
+    "patchedDependencies": {
+      "vue3-video-play": "packages/pc/patches/vue3-video-play.patch"
+    }
+  }
+}

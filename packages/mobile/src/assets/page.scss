@@ -1,0 +1,76 @@
+/* ===== 二级页面通用骨架样式 ===== */
+.page {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  background: var(--page-bg);
+}
+
+/* 标题栏：设计稿 4094:305「二级页面」的顶部只有一枚贴边的返回按钮
+   （带 PDF/视频切换的页面再在正中间放一组），没有 AppHeader，也没有页面标题。
+   它叠在内容之上，所以不占流、背景透明；空白处 pointer-events 透传，
+   免得挡住下面的内容。 */
+.page-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  /* 设计稿：按钮贴上沿 8px，左右贴屏幕边 */
+  padding: 8px 0;
+  pointer-events: none;
+
+  > * {
+    pointer-events: auto;
+  }
+
+  /* 返回按钮（设计稿 4094:314，88×40）：
+     整颗按钮直接用切图——底色、金边、装饰箭头、文字都在图里，
+     CSS 只负责摆位置。两张图已经互为镜像（en 那侧是直角贴左边、
+     ar 那侧是直角贴右边），所以靠 .directionRtl 整体换图即可，不用翻箭头。
+     按钮本身不放内容，靠模板上的 aria-label 提供可访问名称。 */
+  .back {
+    flex: 0 0 auto;
+    width: 88px;
+    height: 40px;
+    padding: 0;
+    border: none;
+    background: url('@/assets/img/back_icon_en.png') no-repeat center / 100% 100%;
+    cursor: pointer;
+
+    .directionRtl & {
+      background-image: url('@/assets/img/back_icon_ar.png');
+    }
+
+    &:active {
+      opacity: 0.85;
+    }
+  }
+}
+
+.page-main {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 12px 16px;
+}
+
+.placeholder {
+  padding: 40px 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--txt-soft);
+}
+
+.app-footer {
+  flex: 0 0 auto;
+  text-align: center;
+  font-size: 11.5px;
+  padding: 10px 12px;
+  padding-bottom: calc(10px + env(safe-area-inset-bottom));
+  color: rgba(255, 255, 255, 0.85);
+  background: var(--vt-c);
+}

@@ -1,0 +1,40 @@
+# 依赖
+node_modules/
+.pnpm-store/
+
+# 构建产物
+dist/
+dist-ssr/
+*.local
+
+# 编辑器
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# 日志
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# 系统
+.DS_Store
+Thumbs.db
+
+# Vite / Vitest 临时产物
+*.timestamp-*
+*.tsbuildinfo
+
+# Playwright MCP 临时产物
+.playwright-mcp/
+
+# 本地 Claude 配置
+.claude/settings.local.json

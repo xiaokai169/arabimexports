@@ -1,0 +1,106 @@
+# ============================================================================
+# 阿拉伯进出口商联合会官网 —— PC / 移动端同域名 UA 分流
+# 适用：Hostinger 共享主机（Apache + mod_rewrite）
+#
+# 部署目录结构：
+#   public_html/
+#   ├── .htaccess          ← 本文件
+#   ├── index.html         ← packages/pc/dist 的内容
+#   ├── assets/            ← packages/pc/dist 的内容
+#   └── m/                 ← packages/mobile/dist 的内容（整个 dist 放进来）
+#       ├── index.html
+#       └── assets/
+# ============================================================================
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # --------------------------------------------------------------------------
+  # 1. 用户手动切换的版本优先（cookie 由页面上的“访问电脑版/手机版”写入）
+  #    必须排在 UA 判断之前，否则用户点了切换下一秒就被弹回去
+  # --------------------------------------------------------------------------
+  RewriteCond %{HTTP_COOKIE} (^|;\s*)site_version=pc($|;) [NC]
+  RewriteRule ^m/(.*)$ /$1 [R=302,L]
+
+  RewriteCond %{HTTP_COOKIE} (^|;\s*)site_version=mobile($|;) [NC]
+  RewriteCond %{REQUEST_URI} !^/m/
+  RewriteRule ^(.*)$ /m/$1 [R=302,L]
+
+  # --------------------------------------------------------------------------
+  # 2. UA 自动分流：手机 + 平板 → /m/，只有电脑留 PC 端
+  #
+  # 为什么拆成两条：手机和平板的 UA 特征不同，没法用一条正则表达。
+  #   2a 手机     —— UA 带 Mobile（iPhone / 安卓手机 / 其他移动系统）
+  #   2b 安卓平板 —— UA 有 Android 但没有 Mobile
+  #                  （安卓手机两个词都有，所以 2b 不会误伤手机）
+  #
+  # ⚠️ 有两类设备不在下面任何一条里，服务端拿不到信号，只能靠客户端 JS 兜底
+  #    （见 packages/pc/index.html）：
+  #      · iPad —— iPadOS 13 起 UA 与 Mac 逐字节相同（Apple 有意为之）。
+  #      · 开了「请求桌面版网站」的折叠屏 / 安卓平板 —— UA 被换成
+  #        X11; Linux x86_64，与真 Linux 桌面逐字节相同。在服务端认它等于把
+  #        所有 Linux 桌面访客误送进 /m/，所以这一条故意不在这里做。
+  # --------------------------------------------------------------------------
+
+  # 2a. 手机，以及老 iPad（iPadOS 12 及更早，UA 里直接写 iPad 且带 Mobile）
+  #
+  # ⚠️ 这条正则里绝不能出现字面空格。Apache/LiteSpeed 解析 .htaccess 是按空白
+  #    分词的（只有加引号才能保护空格），"windows phone" 和 "opera mini" 会把这一行
+  #    拆成 5 个参数、超出 RewriteCond 允许的 2~3 个，使**整条规则被静默丢弃**。
+  #    线上曾因此长期表现为「手机走服务端不跳、只有 2b 那条（正则无空格）还活着」，
+  #    而手机看起来正常，只是因为 index.html 里的客户端 JS 兜住了（代价是首屏闪一下）。
+  #    这里用 [ ] 字符类代替空格：匹配结果相同，但不会被分词拆开。
+  RewriteCond %{HTTP_USER_AGENT} (iphone|ipod|ipad|windows[ ]phone|blackberry|webos|iemobile|opera[ ]mini|mobile) [NC]
+  RewriteCond %{REQUEST_URI} !^/m/
+  # 不能重定向静态资源，否则手机加载 PC 版图片会被 302 到 /m/，导致图片全裂
+  RewriteCond %{REQUEST_URI} !\.(js|css|png|jpe?g|gif|svg|webp|woff2?|ttf|ico|mp3|mp4|json|map|m3u8)$ [NC]
+  RewriteRule ^(.*)$ /m/$1 [R=302,L]
+
+  # 2b. 安卓平板：有 Android 但没有 Mobile（安卓手机两个词都有，不会误伤手机）
+  #
+  # ⚠️ 别指望这条能接住折叠屏。三星**浏览器**确实会在展开时去掉 Mobile
+  #    （见 https://developer.samsung.com/internet/user-agent-string-format.html
+  #    的 UX_RECOMMEND 字段，小屏才填 Mobile），但 **Chrome** 走的是另一套：
+  #    它把折叠屏整体判定为大屏设备、默认开启「请求桌面版网站」，UA 直接换成
+  #    X11; Linux x86_64，Android 和 Mobile 一起消失，根本走不到这里。
+  #    折叠屏的兜底在客户端，见 packages/pc/index.html 的 isDesktopModeAndroid。
+  RewriteCond %{HTTP_USER_AGENT} android [NC]
+  RewriteCond %{HTTP_USER_AGENT} !mobile [NC]
+  RewriteCond %{REQUEST_URI} !^/m/
+  RewriteCond %{REQUEST_URI} !\.(js|css|png|jpe?g|gif|svg|webp|woff2?|ttf|ico|mp3|mp4|json|map|m3u8)$ [NC]
+  RewriteRule ^(.*)$ /m/$1 [R=302,L]
+
+  # --------------------------------------------------------------------------
+  # 3. 两个 SPA 各自的 history 模式 fallback（刷新子路由不能 404）
+  #    移动端规则必须排在 PC 端通用规则之前
+  # --------------------------------------------------------------------------
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^m/.*$ /m/index.html [L]
+
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule . /index.html [L]
+</IfModule>
+
+# ----------------------------------------------------------------------------
+# 同一个 URL 按 UA 返回不同内容，必须声明 Vary 防止 CDN / 代理缓存串味
+# ----------------------------------------------------------------------------
+<IfModule mod_headers.c>
+  <FilesMatch "\.html$">
+    Header set Vary "User-Agent"
+  </FilesMatch>
+</IfModule>
+
+# ----------------------------------------------------------------------------
+# 移动端资源长缓存（文件名带 hash，可放心缓存）
+# ----------------------------------------------------------------------------
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType text/css "access plus 1 year"
+  ExpiresByType application/javascript "access plus 1 year"
+  ExpiresByType image/png "access plus 1 year"
+  ExpiresByType image/jpeg "access plus 1 year"
+  ExpiresByType image/webp "access plus 1 year"
+  ExpiresByType font/woff2 "access plus 1 year"
+</IfModule>

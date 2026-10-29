@@ -1,0 +1,11 @@
+{
+  "name": "@arabimexports/shared",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "PC 端与移动端共用的资源、数据与文案",
+  "exports": {
+    "./*": "./src/*",
+    "./assets/*": "./assets/*"
+  }
+}

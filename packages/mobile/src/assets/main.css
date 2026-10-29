@@ -1,0 +1,84 @@
+@import './base.css';
+
+/* ===== 通用布局工具类（沿用桌面端命名习惯）===== */
+.div-flex {
+  display: flex;
+}
+
+.jc {
+  justify-content: center;
+}
+
+.js {
+  justify-content: space-between;
+}
+
+.ac {
+  align-items: center;
+}
+
+.flex-1 {
+  flex: 1;
+}
+
+.text-center {
+  text-align: center;
+}
+
+/* ===== 移动端滚动容器 ===== */
+.scroll-y {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* ===== 安全区适配（iPhone 刘海屏底部）===== */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* ===== 卡片 ===== */
+.card {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+/* ===== 圆形图框（桌面端 .imgBorder 的移动端版）===== */
+.imgBorder {
+  border-radius: 50%;
+  border: 1px solid #000;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  overflow: hidden;
+}
+
+/* ===== 页面切换动画 ===== */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* ===== Vant 主题色覆盖：与桌面端绿色主色统一 ===== */
+:root {
+  --van-primary-color: var(--vt-c);
+  --van-tabbar-item-active-color: var(--vt-c);
+  --van-tabs-bottom-bar-color: var(--vt-c);
+  --van-nav-bar-icon-color: var(--vt-c);
+  --van-nav-bar-text-color: var(--vt-c);
+  --van-button-primary-background: var(--vt-c);
+  --van-button-primary-border-color: var(--vt-c);
+}

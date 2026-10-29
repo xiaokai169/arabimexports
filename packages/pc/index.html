@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" href="/favicon.ico">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Council of Arab Economic Unit
+    Arab Exporter & Importer Union</title>
+  <link rel="stylesheet" href="./src/assets/iconfont.css">
+  <script>
+    // 移动端 UA 分流：手机和平板访问时跳到同域名的 /m/ 目录，保留当前路径。
+    // 合并前这里是跳转到独立子域名 m.arabimexports.org，现已改为同域名。
+    // 若服务器端 .htaccess 也配了同样的规则，会先于本脚本生效（服务端跳转在前），二者不冲突。
+    // 但 iPad 是例外——它的 UA 伪装成 Mac，服务端认不出来，只能靠本脚本兜住。
+    (function () {
+      // 本地开发必须跳过。dev 下 PC(5173) 与移动端(5174) 是两个端口的两个服务，
+      // 并不存在同域名的 /m/ 目录：跳到 /m/ 会被 PC 的 SPA fallback 吐回同一个
+      // index.html，于是 /m/ → /m/m/ → /m/m/m/ 无限套娃，最终白屏。
+      var host = location.hostname;
+      var isLocalDev =
+        host === 'localhost' ||
+        host === '127.0.0.1' ||
+        host === '::1' ||
+        host === '[::1]' ||
+        /^192\.168\./.test(host) ||
+        /^10\./.test(host) ||
+        /^172\.(1[6-9]|2\d|3[01])\./.test(host);
+      if (isLocalDev) return;
+
+      // 手机和平板都归移动端，只有电脑留 PC 端。
+      // 这里的判定必须与 deploy/.htaccess 第 2 节保持一致：
+      // 那一层是主，这一层是它失效时的兜底（比如 .htaccess 没传上去）。改一处就要改另一处。
+      var ua = navigator.userAgent;
+
+      // 手机：iPhone / 安卓手机 / 其他移动系统。
+      // 末尾的 Mobile 是通用标记，不能漏：安卓手机的 UA 是「Android ... Mobile」，
+      // 安卓平板则没有 Mobile（交给下面那条）。漏掉 Mobile 会把所有安卓手机误判成电脑。
+      var isPhone = /iPhone|iPod|Windows Phone|BlackBerry|IEMobile|Opera Mini|Mobile/i.test(ua);
+      // 老 iPad（iPadOS 12 及更早）：UA 里直接写 iPad
+      var isLegacyIPad = /iPad/i.test(ua);
+      // 安卓平板：有 Android 但没有 Mobile（安卓手机两个词都有）。
+      // 折叠屏在**三星浏览器**里展开后走这条；在 Chrome 里走不到——
+      // Chrome 会把折叠屏整个换成桌面 UA，见下面的 isDesktopModeAndroid。
+      var isAndroidTablet = /Android/i.test(ua) && !/Mobile/i.test(ua);
+      // iPadOS 13 起，iPad 的 UA 与 Mac 逐字节相同（Apple 有意为之，服务端无法分辨），
+      // 唯一可用的信号是触点数：Mac 报 0，iPad 报 5。
+      // 两个条件必须同时满足——只看触点数会误伤触屏 Windows 笔记本。
+      var isModernIPad = /Macintosh/i.test(ua) && navigator.maxTouchPoints > 1;
+      // 折叠屏 / 安卓平板开着「请求桌面版网站」时，Chrome 把 UA 换成
+      // 「X11; Linux x86_64」——Android 和 Mobile 两个标记会一起消失，
+      // 上面四条全部落空。服务端同样认不出：这时它和真 Linux 桌面逐字节相同，
+      // 在服务端认它会把所有 Linux 桌面访客误送进 /m/，所以只能在这里兜。
+      // 剩下的线索还是触点数——真 Linux 桌面报 0，触屏设备报 5/10。
+      // Windows 触屏本是 Windows NT，走不到这条，不会误伤。
+      var isDesktopModeAndroid = /X11; Linux/i.test(ua) && navigator.maxTouchPoints > 1;
+
+      var isMobile =
+        isPhone || isLegacyIPad || isAndroidTablet || isModernIPad || isDesktopModeAndroid;
+
+      // 用户手动选过「电脑版」时绝不能跳：.htaccess 第 1 节的 site_version=pc 分支
+      // 会把 /m/ 弹回 PC，这里再弹回 /m/ 就成了来回死循环。
+      // 目前页面上还没有写这个 cookie 的入口（README「后续可做的事」第 5 条），
+      // 但服务端分支已经就位，加上这一行是为了以后接入口时不炸。
+      var preferPC = /(^|;\s*)site_version=pc($|;)/.test(document.cookie);
+
+      // 已经在 /m/ 下就不再跳，兜底防止任何形式的循环
+      if (isMobile && !preferPC && !/^\/m(\/|$)/.test(location.pathname)) {
+        window.location.replace('/m' + location.pathname + location.search);
+      }
+    })();
+  </script>
+</head>
+
+<body>
+  <div id="app"></div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+
+</html>
